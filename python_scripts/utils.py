@@ -1,4 +1,4 @@
-"""Misc methods that can be one timers or just handful"""
+"""several classes for useful methods for data manipulation, plotting etc"""
 import os
 import pandas as pd
 from sklearn.model_selection import train_test_split
@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-class Utils:
+class DataUtils:
 
     def __init__(self):
 
@@ -103,10 +103,10 @@ class BusesDataset(Dataset):
 
         return img.double(), targets
 
-# u = Utils()
+# u = DataUtils()
 # u.split_imgs_train_val('busesTrain')
 
-
+# TODO: Add a class of plotting utils
 root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 dataset = BusesDataset(root, 'train', transforms=torchvision.transforms.ToTensor())
 
