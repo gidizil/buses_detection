@@ -48,7 +48,7 @@ def view(images, targets, k, std=1, mean=0):
         inp = out.cpu().numpy().transpose((1, 2, 0))
         inp = np.array(std)*inp+np.array(mean)
         inp = np.clip(inp,0,1)
-        ax = figure.add_subplot(2, 2, i + 1)
+        ax = figure.add_subplot(1, 1, i + 1)
         ax.imshow(images[i].cpu().numpy().transpose((1, 2, 0)))
         bbox = targets[i]['bbox'].cpu().numpy()
         labels = targets[i]['label'].cpu().numpy()
@@ -61,7 +61,7 @@ def view(images, targets, k, std=1, mean=0):
     plt.show()
 
 
-view(images, targets, 4)
+view(images, targets, 1)
 
 
 

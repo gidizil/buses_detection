@@ -65,6 +65,20 @@ class DataUtils:
             new_img_path = os.path.join(validation_path, img_name)
             shutil.copyfile(curr_img_path, new_img_path)
 
+    @staticmethod
+    def convert_boxes_coordinates_1(bbox_coords):
+        """
+        Converts the presentation of the bounding box
+        from [x1, y1, w, h] - where (x1, y1) is upper left
+        to [x1, y1, x2, y2] where (x1,y1) upper-left, (x2,y2) - lower-right
+        :param bbox_coords: list or np. array. In the form of [x1, y1, w, h]
+        :return: np.array. in the form of [x1,y1, x2, y2]. (x1,y1) upper-left, (x2,y2) - lower-right
+        """
+        x1, y1 = bbox_coords[0:2]
+        x2 = x1 + bbox_coords[2]
+        y2 = y1 + bbox_coords[2]
+        return [x1, y1, x2, y2]
+
 
 class BusesDataset(Dataset):
     """Dataset to load images to the model"""
