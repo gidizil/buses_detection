@@ -8,6 +8,9 @@ import ast
 from PIL import Image
 import torch
 import torchvision
+from matplotlib import patches
+import matplotlib.pyplot as plt
+import numpy as np
 
 
 class Utils:
@@ -91,12 +94,12 @@ class BusesDataset(Dataset):
         label = self.labels[idx]
 
         for transform in self.transforms:
-            transform(img)
+            img = transform(img)
 
 
         targets = {}
-        targets['bbox'] = torch.from_numpy(bbox).double()
-        targets['label'] = torch.from_numpy(label).type(torch.int64)
+        targets['bbox'] = torch.tensor(bbox).double()
+        targets['label'] = torch.tensor(label).type(torch.int64)
 
         return img.double(), targets
 
@@ -107,8 +110,38 @@ class BusesDataset(Dataset):
 root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 dataset = BusesDataset(root, 'train', transforms=torchvision.transforms.ToTensor())
 
-print(dataset[0])
+# print(dataset[0])
 
+"""Test it's working"""
+buses_loader = DataLoader(dataset, batch_size=4, shuffle=True, collate_fn=lambda x: list(zip(*x)))
+images, targets = next(iter(buses_loader))
+
+
+def view(images, targets, k, std=1, mean=0):
+    figure = plt.figure(figsize=(30,30))
+    images=list(images)
+    targets=list(targets)
+    labels_dict = {1: 'green', 2: 'yellow', 3: 'white',
+                   4: 'gray', 5: 'blue', 6: 'red'}
+    for i in range(k):
+        out = torchvision.utils.make_grid(images[i])
+        inp = out.cpu().numpy().transpose((1, 2, 0))
+        inp = np.array(std)*inp+np.array(mean)
+        inp = np.clip(inp,0,1)
+        ax = figure.add_subplot(2, 2, i + 1)
+        ax.imshow(images[i].cpu().numpy().transpose((1, 2, 0)))
+        bbox = targets[i]['bbox'].cpu().numpy()
+        labels = targets[i]['label'].cpu().numpy()
+        # l[:, 2] = l[:, 2]-l[:, 0]
+        # l[:, 3]=l[:, 3]-l[:, 1]
+        for j in range(len(labels)):
+            ax.add_patch(patches.Rectangle((bbox[j][0], bbox[j][1]), bbox[j][2], bbox[j][3],
+                                           linewidth=5, edgecolor=labels_dict[labels[j]], facecolor='none'))
+
+    plt.show()
+
+
+view(images,targets,4)
 
 
 
