@@ -132,8 +132,6 @@ def view(images, targets, k, std=1, mean=0):
         ax.imshow(images[i].cpu().numpy().transpose((1, 2, 0)))
         bbox = targets[i]['bbox'].cpu().numpy()
         labels = targets[i]['label'].cpu().numpy()
-        # l[:, 2] = l[:, 2]-l[:, 0]
-        # l[:, 3]=l[:, 3]-l[:, 1]
         for j in range(len(labels)):
             ax.add_patch(patches.Rectangle((bbox[j][0], bbox[j][1]), bbox[j][2], bbox[j][3],
                                            linewidth=5, edgecolor=labels_dict[labels[j]], facecolor='none'))
@@ -141,7 +139,7 @@ def view(images, targets, k, std=1, mean=0):
     plt.show()
 
 
-view(images,targets,4)
+#view(images, targets,4)
 
 
 
