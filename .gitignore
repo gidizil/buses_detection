@@ -1,1 +1,7 @@
 busesTrain*
+.DS_Store
+.idea/
+python_scripts.zip
+python_scripts/__pycache__/
+train/
+validation/
