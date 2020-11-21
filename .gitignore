@@ -5,3 +5,4 @@ python_scripts.zip
 python_scripts/__pycache__/
 train/
 validation/
+models/__pycache__/
