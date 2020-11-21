@@ -28,12 +28,14 @@ plt.show()
 
 """Check 2 - See that Dataset and DataLoader works as expected"""
 root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-dataset = BusesDataset(root, 'train', transforms=torchvision.transforms.ToTensor())
+dataset = BusesDataset(root, 'train', faster_rcnn=False,
+                       transforms=torchvision.transforms.ToTensor())
 
 # print(dataset[0])
 
 """Test it's working"""
-buses_loader = DataLoader(dataset, batch_size=4, shuffle=True, collate_fn=lambda x: list(zip(*x)))
+buses_loader = DataLoader(dataset, batch_size=4, shuffle=True,
+                          collate_fn=lambda x: list(zip(*x)))
 images, targets = next(iter(buses_loader))
 
 
@@ -48,10 +50,10 @@ def view(images, targets, k, std=1, mean=0):
         inp = out.cpu().numpy().transpose((1, 2, 0))
         inp = np.array(std)*inp+np.array(mean)
         inp = np.clip(inp,0,1)
-        ax = figure.add_subplot(1, 1, i + 1)
+        ax = figure.add_subplot(2, 2, i + 1)
         ax.imshow(images[i].cpu().numpy().transpose((1, 2, 0)))
-        bbox = targets[i]['bbox'].cpu().numpy()
-        labels = targets[i]['label'].cpu().numpy()
+        bbox = targets[i]['boxes'].cpu().numpy()
+        labels = targets[i]['labels'].cpu().numpy()
         # l[:, 2] = l[:, 2]-l[:, 0]
         # l[:, 3]=l[:, 3]-l[:, 1]
         for j in range(len(labels)):
@@ -61,7 +63,7 @@ def view(images, targets, k, std=1, mean=0):
     plt.show()
 
 
-view(images, targets, 1)
+view(images, targets, 4)
 
 
 

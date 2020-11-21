@@ -66,7 +66,7 @@ class DataUtils:
             shutil.copyfile(curr_img_path, new_img_path)
 
     @staticmethod
-    def convert_boxes_coordinates_1(bbox_coords):
+    def convert_boxes_coordinates_1(bbox_coords_list):
         """
         Converts the presentation of the bounding box
         from [x1, y1, w, h] - where (x1, y1) is upper left
@@ -74,18 +74,21 @@ class DataUtils:
         :param bbox_coords: list or np. array. In the form of [x1, y1, w, h]
         :return: np.array. in the form of [x1,y1, x2, y2]. (x1,y1) upper-left, (x2,y2) - lower-right
         """
-        x1, y1 = bbox_coords[0:2]
-        x2 = x1 + bbox_coords[2]
-        y2 = y1 + bbox_coords[2]
+        for bbox_coords in bbox_coords_list:
+            x1, y1 = bbox_coords[0:2]
+            x2 = x1 + bbox_coords[2]
+            y2 = y1 + bbox_coords[3]
+
         return [x1, y1, x2, y2]
 
 
-class BusesDataset(Dataset):
+class BusesDataset(Dataset, DataUtils):
     """Dataset to load images to the model"""
-    def __init__(self, root, folder='train', transforms=None, f_name='labels.txt'):
+    def __init__(self, root, folder='train', transforms=None, f_name='labels.txt', faster_rcnn=False):
         self.transforms = []
         if transforms is not None:
             self.transforms.append(transforms)
+        self.faster_rcnn = faster_rcnn
 
         self.root = root
         self.folder = folder
@@ -93,6 +96,9 @@ class BusesDataset(Dataset):
         xy_df = pd.read_csv(os.path.join(root, folder, f_name), sep=':')
         xy_df['annotations'] = xy_df['annotations'].apply(lambda x: ast.literal_eval('[' + x + ']'))
         xy_df['box_data'] = xy_df['annotations'].apply(lambda x: [y[0:4] for y in x])
+        if self.faster_rcnn:
+            xy_df['box_data'] = xy_df['box_data'].apply(lambda x:
+                                                        self.convert_boxes_coordinates_1(x))
         xy_df['labels'] = xy_df['annotations'].apply(lambda x: [y[4] for y in x])
         self.box_data = xy_df['box_data'].values
         self.labels = xy_df['labels'].values
@@ -110,12 +116,11 @@ class BusesDataset(Dataset):
         for transform in self.transforms:
             img = transform(img)
 
-
         targets = {}
-        targets['bbox'] = torch.tensor(bbox).double()
-        targets['label'] = torch.tensor(label).type(torch.int64)
+        targets['boxes'] = torch.tensor(bbox).view(1, -1).float()
+        targets['labels'] = torch.tensor(label).type(torch.int64)
 
-        return img.double(), targets
+        return img.float(), targets
 
 # u = DataUtils()
 # u.split_imgs_train_val('busesTrain')
@@ -132,7 +137,7 @@ images, targets = next(iter(buses_loader))
 
 
 def view(images, targets, k, std=1, mean=0):
-    figure = plt.figure(figsize=(30,30))
+    figure = plt.figure(figsize=(30, 30))
     images=list(images)
     targets=list(targets)
     labels_dict = {1: 'green', 2: 'yellow', 3: 'white',
@@ -144,8 +149,8 @@ def view(images, targets, k, std=1, mean=0):
         inp = np.clip(inp,0,1)
         ax = figure.add_subplot(2, 2, i + 1)
         ax.imshow(images[i].cpu().numpy().transpose((1, 2, 0)))
-        bbox = targets[i]['bbox'].cpu().numpy()
-        labels = targets[i]['label'].cpu().numpy()
+        bbox = targets[i]['boxes'].cpu().numpy()
+        labels = targets[i]['labels'].cpu().numpy()
         for j in range(len(labels)):
             ax.add_patch(patches.Rectangle((bbox[j][0], bbox[j][1]), bbox[j][2], bbox[j][3],
                                            linewidth=5, edgecolor=labels_dict[labels[j]], facecolor='none'))
