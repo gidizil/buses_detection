@@ -101,15 +101,14 @@ class FasterRCNNMODEL:
 
             # TODO: Calculate Dice and IoU loss for it
             # self.model.eval() # Set model to evaluate performance
-            # with torch.no_grad():
-            #     for images, targets in val_loader:
-            #         images = list(image.to(self.device) for image in images)
-            #         targets = [{k: v.to(self.device) for k, v in t.items()} for t in targets]
-            #
-            #         loss_dict = self.model(images, targets)
-            #         # losses = sum(loss for loss in loss_dict.values())
-            #
-            #     print('Validation Loss = {:.4f}'.format(losses.item()))
+            with torch.no_grad():
+                for images, targets in val_loader:
+                    images = list(image.to(self.device) for image in images)
+                    targets = [{k: v.to(self.device) for k, v in t.items()} for t in targets]
+                    loss_dict = self.model(images, targets)
+                    losses = sum(loss for loss in loss_dict.values())
+
+                print('Validation Loss = {:.4f}'.format(losses.item()))
 
 
 
