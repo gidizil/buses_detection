@@ -33,3 +33,9 @@ def run(myAnnFileName, buses):
                 else:
                     strToWrite += ','
         annFileEstimations.write(strToWrite)
+
+
+root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+file_dir = 'python_scripts'
+file_name = 'my_annotations_train.txt'
+run(os.path.join(root, file_dir, file_name), None)

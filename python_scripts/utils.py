@@ -157,10 +157,15 @@ def view(images, targets, k, std=1, mean=0):
 
     plt.show()
 
-
 #view(images, targets,4)
 
 
+class MiscUtils:
 
+    def __init__(self):
+        pass
+
+    def prepare_model_to_eval(self):
+        """temporary name - all the necessary stuff to integrate with testing code"""
 
 

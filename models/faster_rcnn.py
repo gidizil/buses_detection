@@ -75,7 +75,8 @@ class FasterRCNNMODEL:
         :param num_epochs: int. Number of epochs for training and validation
         :return:
         """
-
+        train_loss = 0
+        val_loss = 0
         for epoch in range(num_epochs):
             self.model.train()  # Set to training mode
             with torch.set_grad_enabled(True):
@@ -92,12 +93,13 @@ class FasterRCNNMODEL:
                     # Calculate Loss
                     loss_dict = self.model(images, targets)  # what happens here?
                     losses = sum(loss for loss in loss_dict.values())
+                    train_loss += losses.item() * len(images)
 
                     # Backward Prop & Update weights
                     losses.backward()
                     self.optimizer.step()
 
-                print('Train Loss = {:.4f}'.format(losses.item()))
+                print('Train Loss = {:.4f}'.format(train_loss * len(train_loader.dataset)))
 
             # TODO: Calculate Dice and IoU loss for it
             # self.model.eval() # Set model to evaluate performance
@@ -107,8 +109,9 @@ class FasterRCNNMODEL:
                     targets = [{k: v.to(self.device) for k, v in t.items()} for t in targets]
                     loss_dict = self.model(images, targets)
                     losses = sum(loss for loss in loss_dict.values())
+                    val_loss += losses.item() * len(images)
 
-                print('Validation Loss = {:.4f}'.format(losses.item()))
+                print('Validation Loss = {:.4f}'.format(val_loss * len(val_loader.dataset)))
 
 
 
