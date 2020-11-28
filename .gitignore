@@ -6,3 +6,4 @@ python_scripts/__pycache__/
 train/
 validation/
 models/__pycache__/
+view_sample_results.jpg
