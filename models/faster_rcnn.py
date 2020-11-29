@@ -139,8 +139,7 @@ class FasterRCNNMODEL:
                         targets = self.model(images)
                         MiscUtils.view(images, targets, k=len(images), model_type='faster_rcnn')
 
-                        # TODO: gen annotations and labels file
-
+                # TODO: convert bbox from [x1, y1, x2, y2] to [x1, y1, w, h]
                 DataUtils.gen_out_file('output_file.txt', imgs_name_list, bbox_list, labels_list)
                 print('Validation Loss = {:.4f}'.format(val_loss / len(val_loader.dataset)))
 

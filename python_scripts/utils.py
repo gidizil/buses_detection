@@ -120,6 +120,7 @@ class DataUtils:
             img_annots = []
             labels_detects = labels_list[img_idx]
             bbox_detects = bbox_coords_list[img_idx]
+            bbox_detects = DataUtils.convert_boxes_coordinates_1_inv(bbox_detects)
             for idx, bbox in enumerate(bbox_detects):  # for each detection
                 bbox_cp = bbox.copy()
                 bbox_cp.append(labels_detects[idx])

@@ -34,5 +34,5 @@ faster_rcnn_model.set_model()
 # faster_rcnn_model.train_model(train_loader, num_epochs=7)
 # TODO: ADD predict_model
 
-faster_rcnn_model.train_eval_model(train_loader, val_loader, num_epochs=20)
+faster_rcnn_model.train_eval_model(train_loader, val_loader, num_epochs=30)
 # TODO: Add tensorboard support
