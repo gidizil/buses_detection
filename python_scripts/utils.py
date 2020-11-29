@@ -71,24 +71,78 @@ class DataUtils:
         Converts the presentation of the bounding box
         from [x1, y1, w, h] - where (x1, y1) is upper left
         to [x1, y1, x2, y2] where (x1,y1) upper-left, (x2,y2) - lower-right
-        :param bbox_coords: list or np. array. In the form of [x1, y1, w, h]
+        :param bbox_coords_list: list or np. array. In the form of [x1, y1, w, h]
         :return: np.array. in the form of [x1,y1, x2, y2]. (x1,y1) upper-left, (x2,y2) - lower-right
         """
+
+        new_bbox_coords_list = []
         for bbox_coords in bbox_coords_list:
             x1, y1 = bbox_coords[0:2]
             x2 = x1 + bbox_coords[2]
             y2 = y1 + bbox_coords[3]
 
-        return [x1, y1, x2, y2]
+            new_bbox_coords_list.append([x1, y1, x2, y2])
+
+        return np.array(new_bbox_coords_list)
+
+    @staticmethod
+    def convert_boxes_coordinates_1_inv(bbox_coords_list):
+        """
+        Converts the presentation of the bounding box
+        from [x1, y1, x2, y2] - where (x1, y1) is upper left
+        to [x1, y1, w, h] where (x1,y1) upper-left, (x2,y2) - lower-right
+        :param bbox_coords_list: list or np. array. In the form of [x1, y1, w, h]
+        :return: np.array. in the form of [x1,y1, x2, y2]. (x1,y1) upper-left, (x2,y2) - lower-right
+        """
+        new_bbox_list = []
+        for bbox_coords in bbox_coords_list:
+            x1, y1, x2, y2 = bbox_coords[0:4]
+            w = x2 - x1
+            h = y2 - y1
+            new_bbox_list.append([x1, y1, w, h])
+
+        return new_bbox_list
+
+    @staticmethod
+    def gen_out_file(out_f_path, images_name_list, bbox_coords_list, labels_list):
+        """
+        Generate output file to compare to results
+        :param out_f_path: str. path to save the output file
+        :param images_name_list: list. list of all the images in loader name.
+        :param bbox_coords_list: list of lists. list of all the bbox_coords_list for each image
+        :param labels_list: list of lists. list of all the labels  for each image
+        :return: None. Generates a file of the results in the format if annotationsTrain.txt
+        """
+
+        # bind bbox_coords_list and labels
+        annotations = []
+        for img_idx in range(len(images_name_list)):  # for each image
+            img_annots = []
+            labels_detects = labels_list[img_idx]
+            bbox_detects = bbox_coords_list[img_idx]
+            for idx, bbox in enumerate(bbox_detects):  # for each detection
+                bbox_cp = bbox.copy()
+                bbox_cp.append(labels_detects[idx])
+                img_annots.append(bbox_cp)
+
+            annotations.append(img_annots)
+
+        # TODO: Maybe pandas is not the fastest way of doing things
+        results_df = pd.DataFrame({'img_name': images_name_list, 'annots': annotations})
+
+        results_df.to_csv(out_f_path, index=False, sep=':', header=False)
 
 
 class BusesDataset(Dataset, DataUtils):
     """Dataset to load images to the model"""
-    def __init__(self, root, folder='train', transforms=None, f_name='labels.txt', faster_rcnn=False):
+    def __init__(self, root, folder='train',
+                 transforms=None, f_name='labels.txt',
+                 model_type='f_rcnn', mode='train'):
         self.transforms = []
         if transforms is not None:
             self.transforms.append(transforms)
-        self.faster_rcnn = faster_rcnn
+        self.model_type = model_type
+        self.mode = mode
 
         self.root = root
         self.folder = folder
@@ -96,7 +150,7 @@ class BusesDataset(Dataset, DataUtils):
         xy_df = pd.read_csv(os.path.join(root, folder, f_name), sep=':')
         xy_df['annotations'] = xy_df['annotations'].apply(lambda x: ast.literal_eval('[' + x + ']'))
         xy_df['box_data'] = xy_df['annotations'].apply(lambda x: [y[0:4] for y in x])
-        if self.faster_rcnn:
+        if self.model_type == 'f_rcnn':
             xy_df['box_data'] = xy_df['box_data'].apply(lambda x:
                                                         self.convert_boxes_coordinates_1(x))
         xy_df['labels'] = xy_df['annotations'].apply(lambda x: [y[4] for y in x])
@@ -112,15 +166,24 @@ class BusesDataset(Dataset, DataUtils):
         img = Image.open(img_path).convert('RGB')
         bbox = self.box_data[idx]
         label = self.labels[idx]
+        img_name = self.imgs[idx]  # passing this to gen output file
 
         for transform in self.transforms:
             img = transform(img)
 
         targets = {}
-        targets['boxes'] = torch.tensor(bbox).view(1, -1).float()
+        targets['boxes'] = torch.tensor(bbox).float()
         targets['labels'] = torch.tensor(label).type(torch.int64)
 
-        return img.float(), targets
+        if self.mode == 'train':
+            return img.float(), targets
+        elif self.mode == 'eval':
+            return img_name, img.float(), targets
+        else:
+            raise ValueError("mode must be 'train' or 'eval'")
+
+
+
 
 # u = DataUtils()
 # u.split_imgs_train_val('busesTrain')
@@ -136,17 +199,17 @@ buses_loader = DataLoader(dataset, batch_size=4, shuffle=True, collate_fn=lambda
 images, targets = next(iter(buses_loader))
 
 
-def view(images, targets, k, std=1, mean=0):
+def view(images, targets, k, std=1, mean=0, model=None):
     figure = plt.figure(figsize=(30, 30))
     images=list(images)
     targets=list(targets)
     labels_dict = {1: 'green', 2: 'yellow', 3: 'white',
                    4: 'gray', 5: 'blue', 6: 'red'}
     for i in range(k):
-        out = torchvision.utils.make_grid(images[i])
-        inp = out.cpu().numpy().transpose((1, 2, 0))
-        inp = np.array(std)*inp+np.array(mean)
-        inp = np.clip(inp,0,1)
+        # out = torchvision.utils.make_grid(images[i])
+        # inp = out.cpu().numpy().transpose((1, 2, 0))
+        # inp = np.array(std)*inp+np.array(mean)
+        # inp = np.clip(inp,0,1)
         ax = figure.add_subplot(2, 2, i + 1)
         ax.imshow(images[i].cpu().numpy().transpose((1, 2, 0)))
         bbox = targets[i]['boxes'].cpu().numpy()
@@ -167,5 +230,55 @@ class MiscUtils:
 
     def prepare_model_to_eval(self):
         """temporary name - all the necessary stuff to integrate with testing code"""
+        pass
+
+    @staticmethod
+    def view(images, targets, k, std=1, mean=0, model_type = None):
+        figure = plt.figure(figsize=(30, 30))
+        images = list(images)
+        targets = list(targets)
+        labels_dict = {1: 'green', 2: 'yellow', 3: 'white',
+                       4: 'gray', 5: 'blue', 6: 'red'}
+        for i in range(k):
+            out = torchvision.utils.make_grid(images[i])
+            inp = out.cpu().numpy().transpose((1, 2, 0))
+            inp = np.array(std) * inp + np.array(mean)
+            inp = np.clip(inp, 0, 1)
+            ax = figure.add_subplot(2, 2, i + 1)
+            ax.imshow(images[i].cpu().numpy().transpose((1, 2, 0)))
+            bbox = targets[i]['boxes'].cpu().numpy()
+            if model_type == 'faster_rcnn':
+                bbox = bbox.astype(int)
+                bbox = DataUtils.convert_boxes_coordinates_1_inv(bbox)
+
+            labels = targets[i]['labels'].cpu().numpy()
+            for j in range(len(labels)):
+                ax.add_patch(patches.Rectangle((bbox[j][0], bbox[j][1]), bbox[j][2], bbox[j][3],
+                                               linewidth=5, edgecolor=labels_dict[labels[j]], facecolor='none'))
+        plt.savefig('view_sample_results.jpg')
+        plt.close()
+    @staticmethod
+    def view_from_loader(data_loader, k, std=1, mean=0):
+        figure = plt.figure(figsize=(30, 30))
+
+        images, targets = next(iter(data_loader))
+        images = list(images)
+        targets = list(targets)
+        labels_dict = {1: 'green', 2: 'yellow', 3: 'white',
+                       4: 'gray', 5: 'blue', 6: 'red'}
+        for i in range(k):
+            out = torchvision.utils.make_grid(images[i])
+            inp = out.cpu().numpy().transpose((1, 2, 0))
+            inp = np.array(std) * inp + np.array(mean)
+            inp = np.clip(inp, 0, 1)
+            ax = figure.add_subplot(2, 2, i + 1)
+            ax.imshow(images[i].cpu().numpy().transpose((1, 2, 0)))
+            bbox = targets[i]['boxes'].cpu().numpy()
+            labels = targets[i]['labels'].cpu().numpy()
+            for j in range(len(labels)):
+                ax.add_patch(patches.Rectangle((bbox[j][0], bbox[j][1]), bbox[j][2], bbox[j][3],
+                                               linewidth=5, edgecolor=labels_dict[labels[j]], facecolor='none'))
+        plt.show()
+
 
 

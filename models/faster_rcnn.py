@@ -2,6 +2,7 @@ from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 import torchvision
 import torch
 import torch.nn as nn
+from python_scripts.utils import MiscUtils, DataUtils
 
 class FasterRCNNMODEL:
     #TODO: Later on enable passing params params
@@ -9,6 +10,7 @@ class FasterRCNNMODEL:
     def __init__(self, model_params=None):
         self.params = model_params
         self.model = None
+        self.optimizer = None
         self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
     def set_model(self):
@@ -75,9 +77,14 @@ class FasterRCNNMODEL:
         :param num_epochs: int. Number of epochs for training and validation
         :return:
         """
-        train_loss = 0
-        val_loss = 0
+        # For evaluation
+        imgs_name_list = []
+        bbox_list = []
+        labels_list = []
+
         for epoch in range(num_epochs):
+            train_loss = 0
+            val_loss = 0
             self.model.train()  # Set to training mode
             with torch.set_grad_enabled(True):
                 for images, targets in train_loader:
@@ -99,19 +106,43 @@ class FasterRCNNMODEL:
                     losses.backward()
                     self.optimizer.step()
 
-                print('Train Loss = {:.4f}'.format(train_loss * len(train_loader.dataset)))
+                print('Train Loss = {:.4f}'.format(train_loss / len(train_loader.dataset)))
 
             # TODO: Calculate Dice and IoU loss for it
-            # self.model.eval() # Set model to evaluate performance
+
             with torch.no_grad():
-                for images, targets in val_loader:
+                for idx, (imgs_name, images, targets) in enumerate(val_loader):
+                    self.model.train()
                     images = list(image.to(self.device) for image in images)
                     targets = [{k: v.to(self.device) for k, v in t.items()} for t in targets]
+
                     loss_dict = self.model(images, targets)
                     losses = sum(loss for loss in loss_dict.values())
                     val_loss += losses.item() * len(images)
 
-                print('Validation Loss = {:.4f}'.format(val_loss * len(val_loader.dataset)))
+                    if epoch == num_epochs - 1:
+                        self.model.eval()  # Set model to evaluate performance
+                        # TODO Review results on images from the network. Visualize how this works
+                        targets = self.model(images)
+                        # TODO: Apply some selection logic - NMS/one-label etc.
+
+                        # TODO: Accumulate all results for output file
+                        # Think of moving all this into gen_out_file - Looks nicer
+                        imgs_name_list.extend(imgs_name)
+                        bbox_list.extend([target['boxes'].int().cpu().tolist() for target in targets])
+                        labels_list.extend([target['labels'].int().cpu().tolist() for target in targets])
+
+                    """Optional - SEE the performance on the last batch"""
+                    if (epoch == num_epochs - 1) and idx == (len(val_loader) - 1):
+                        self.model.eval()  # Set model to evaluate performance
+                        # TODO Review results on images from the network. Visualize how this works
+                        targets = self.model(images)
+                        MiscUtils.view(images, targets, k=len(images), model_type='faster_rcnn')
+
+                        # TODO: gen annotations and labels file
+
+                DataUtils.gen_out_file('output_file.txt', imgs_name_list, bbox_list, labels_list)
+                print('Validation Loss = {:.4f}'.format(val_loss / len(val_loader.dataset)))
 
 
 

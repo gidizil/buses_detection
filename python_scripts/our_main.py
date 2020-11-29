@@ -12,19 +12,19 @@ integrate it to the necessary files
 # Set DataLoaders for train and validation
 root = root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 buses_train_dataset = BusesDataset(root, 'train',
-                                   f_name='labels.txt', faster_rcnn=True,
-                                   transforms=torchvision.transforms.ToTensor())
+                                   f_name='labels.txt', model_type='f_rcnn',
+                                   transforms=torchvision.transforms.ToTensor(), mode='train')
 buses_val_dataset = BusesDataset(root, 'validation',
-                                 f_name='labels.txt', faster_rcnn=True,
-                                 transforms=torchvision.transforms.ToTensor())
+                                 f_name='labels.txt', model_type='f_rcnn',
+                                 transforms=torchvision.transforms.ToTensor(), mode='eval')
 
 train_loader = DataLoader(buses_train_dataset,
-                          batch_size=8, shuffle=True,
+                          batch_size=4, shuffle=True,
                           collate_fn=lambda x: list(zip(*x)),
                           num_workers=16)  # Understand better collate_fn
 
 val_loader = DataLoader(buses_val_dataset,
-                        batch_size=8, shuffle=True,
+                        batch_size=4, shuffle=True,
                         collate_fn=lambda x: list(zip(*x)),
                         num_workers=16)
 
@@ -34,5 +34,5 @@ faster_rcnn_model.set_model()
 # faster_rcnn_model.train_model(train_loader, num_epochs=7)
 # TODO: ADD predict_model
 
-faster_rcnn_model.train_eval_model(train_loader, val_loader, num_epochs=12)
+faster_rcnn_model.train_eval_model(train_loader, val_loader, num_epochs=20)
 # TODO: Add tensorboard support
