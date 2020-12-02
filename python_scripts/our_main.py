@@ -8,9 +8,8 @@ This is where we'll run our model.
 once we are pleased with it we'll 
 integrate it to the necessary files
 """
-
 # Set DataLoaders for train and validation
-root = root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 buses_train_dataset = BusesDataset(root, 'train',
                                    f_name='labels.txt', model_type='f_rcnn',
                                    transforms=torchvision.transforms.ToTensor(), mode='train')

@@ -104,6 +104,24 @@ class DataUtils:
         return new_bbox_list
 
     @staticmethod
+    def batched_nms(targets):
+        # boxes is a [batch_size, N, 4] tensor, and scores a
+        # [batch_size, N] tensor.
+        boxes, scores, iou_threshold = None, None, None
+        batch_size, N, _ = boxes.shape
+        indices = torch.arange(batch_size, device=boxes.device)
+        indices = indices[:, None].expand(batch_size, N).flatten()
+        boxes_flat = boxes.flatten(0, 1)
+        scores_flat = scores.flatten()
+        indices_flat = torchvision.ops.boxes.batched_nms(
+            boxes_flat, scores_flat, indices, iou_threshold)
+        # now reshape the indices as you want, maybe
+        # projecting back to the [batch_size, N] space
+        # I'm omitting this here
+        indices = indices_flat
+        return indices
+
+    @staticmethod
     def gen_out_file(out_f_path, images_name_list, bbox_coords_list, labels_list):
         """
         Generate output file to compare to results

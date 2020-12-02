@@ -18,9 +18,11 @@ class FasterRCNNMODEL:
         Set model and determine configuration
         :return: None, generate self.model to be used for training and testing
         """
-
+        # Default values: box_score_thresh = 0.05, box_nms_thresh = 0.5
+        kwargs = {'box_score_thresh': 0.3, 'box_nms_thresh': 0.3, 'box_detections_per_img': 6}
         self.model = torchvision.models.detection.fasterrcnn_resnet50_fpn(pretrained=False,
-                                                                          pretrained_backbone=True)
+                                                                          pretrained_backbone=True,
+                                                                          **kwargs)
 
         device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         num_classes = 7
@@ -122,11 +124,8 @@ class FasterRCNNMODEL:
 
                     if epoch == num_epochs - 1:
                         self.model.eval()  # Set model to evaluate performance
-                        # TODO Review results on images from the network. Visualize how this works
                         targets = self.model(images)
-                        # TODO: Apply some selection logic - NMS/one-label etc.
 
-                        # TODO: Accumulate all results for output file
                         # Think of moving all this into gen_out_file - Looks nicer
                         imgs_name_list.extend(imgs_name)
                         bbox_list.extend([target['boxes'].int().cpu().tolist() for target in targets])
@@ -135,7 +134,6 @@ class FasterRCNNMODEL:
                     """Optional - SEE the performance on the last batch"""
                     if (epoch == num_epochs - 1) and idx == (len(val_loader) - 1):
                         self.model.eval()  # Set model to evaluate performance
-                        # TODO Review results on images from the network. Visualize how this works
                         targets = self.model(images)
                         MiscUtils.view(images, targets, k=len(images), model_type='faster_rcnn')
 
