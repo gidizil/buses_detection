@@ -31,7 +31,7 @@ val_loader = DataLoader(buses_val_dataset,
 faster_rcnn_model = FasterRCNNMODEL()
 faster_rcnn_model.set_model()
 # faster_rcnn_model.train_model(train_loader, num_epochs=7)
-# TODO: ADD predict_model
+# TODO: ADD eval_model only
 
-faster_rcnn_model.train_eval_model(train_loader, val_loader, num_epochs=30)
+faster_rcnn_model.train_eval_model(train_loader, val_loader, num_epochs=50)
 # TODO: Add tensorboard support

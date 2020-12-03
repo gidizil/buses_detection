@@ -131,8 +131,8 @@ class FasterRCNNMODEL:
                         bbox_list.extend([target['boxes'].int().cpu().tolist() for target in targets])
                         labels_list.extend([target['labels'].int().cpu().tolist() for target in targets])
 
-                    """Optional - SEE the performance on the last batch"""
-                    if (epoch == num_epochs - 1) and idx == (len(val_loader) - 1):
+                    """Optional - SEE the performance on the second last batch"""
+                    if (epoch == num_epochs - 1) and idx == (len(val_loader) - 2):
                         self.model.eval()  # Set model to evaluate performance
                         targets = self.model(images)
                         MiscUtils.view(images, targets, k=len(images), model_type='faster_rcnn')
