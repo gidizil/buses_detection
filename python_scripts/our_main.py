@@ -29,6 +29,7 @@ val_loader = DataLoader(buses_val_dataset,
 
 """ 1. Try Faster RCNN """
 faster_rcnn_model = FasterRCNNMODEL()
+faster_rcnn_model.set_backbone('resnet50')
 faster_rcnn_model.set_model()
 # faster_rcnn_model.train_model(train_loader, num_epochs=7)
 # TODO: ADD eval_model only
