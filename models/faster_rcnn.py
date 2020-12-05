@@ -20,7 +20,7 @@ class FasterRCNNMODEL:
         backbone is a string containing the backbone we want to use in the model. add more options
         """
         if 'vgg' in backbone.lower():
-            "to somthing"
+            "to somthing-check for options"
         elif 'mobilenet_v2' in backbone.lower():
             self.backbone = torchvision.models.mobilenet_v2(pretrained=True).features
             self.backbone.out_channels = 1280
