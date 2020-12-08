@@ -3,6 +3,7 @@ import torchvision
 import torch
 import torch.nn as nn
 from python_scripts.utils import MiscUtils, DataUtils
+from torchvision.models.detection import FasterRCNN
 
 class FasterRCNNMODEL:
     #TODO: Later on enable passing params params
@@ -13,6 +14,21 @@ class FasterRCNNMODEL:
         self.optimizer = None
         self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
+
+    def set_backbone(self,backbone):
+        """
+        backbone is a string containing the backbone we want to use in the model. add more options
+        """
+        if 'vgg' in backbone.lower():
+            "to somthing-check for options"
+        elif 'mobilenet_v2' in backbone.lower():
+            self.backbone = torchvision.models.mobilenet_v2(pretrained=True).features
+            self.backbone.out_channels = 1280
+        elif 'resnet50' in backbone.lower():
+            self.backbone = torchvision.models.resnet50(pretrained=True).features
+            self.backbone.out_channels = 256
+
+
     def set_model(self):
         """
         Set model and determine configuration
@@ -20,9 +36,10 @@ class FasterRCNNMODEL:
         """
         # Default values: box_score_thresh = 0.05, box_nms_thresh = 0.5
         kwargs = {'box_score_thresh': 0.3, 'box_nms_thresh': 0.3, 'box_detections_per_img': 6}
-        self.model = torchvision.models.detection.fasterrcnn_resnet50_fpn(pretrained=False,
-                                                                          pretrained_backbone=True,
-                                                                          **kwargs)
+        # self.model = torchvision.models.detection.fasterrcnn_resnet50_fpn(pretrained=False,
+        #                                                                   pretrained_backbone=True,
+        #                                                                   **kwargs)
+        self.model = FasterRCNN(self.backbone, num_classes=7, **kwargs)
 
         device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         num_classes = 7
