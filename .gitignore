@@ -7,3 +7,5 @@ train/
 validation/
 models/__pycache__/
 view_sample_results.jpg
+generated_images/
+rand_images/
