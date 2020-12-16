@@ -9,7 +9,8 @@ from python_scripts.utils import DataUtils
 
 class GenRandomImage:
     """Generate images with randomly added buses"""
-    def __init__(self, bg_img_path, buses_imgs_path, buses_annots_df, rand_img_out_name, rescale_buses=False):
+    def __init__(self, bg_img_path, buses_imgs_path, buses_annots_df, rand_img_out_name,
+                 rescale_buses=False, one_label_each=True):
         """
 
         :param img_path: str. path to image to paste on
@@ -21,23 +22,24 @@ class GenRandomImage:
         self.buses_path = buses_imgs_path
         self.buses_annots_df = buses_annots_df
         self.rand_img_out_name = rand_img_out_name
-        if not self.rand_img_out_path.endswith('.jpg'):
-            self.rand_img_out_path += '.jpg'
+        if not self.rand_img_out_name.endswith('.jpg'):
+            self.rand_img_out_name += '.jpg'
         self.rescale_buses = rescale_buses
+        self.one_label_each = one_label_each
 
         self.orig_scale = np.array([3648, 2736])
         self.root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
         # all of these will be generated later-on
         self.rescaled_img = None
-        self.cropped_buses_arr = None
+        self.cropped_buses_arr = []
         self.imgs_and_labels_arr = None
         self.rand_annotations = None
 
         # generate all shared objects
         self.scale_img()
         # self.gen_buses_df()
-        self.get_cropped_buses()
+        self.get_cropped_buses_2()
         self.gen_rand_buses_locations()
         self.gen_labels_file()
         self.paste_rand_buses()
@@ -63,7 +65,6 @@ class GenRandomImage:
         # pil_img = Image.open(img_path)
         return cropped_bus.resize(scale, resample=Image.BICUBIC)
 
-
     @staticmethod
     def save_img(pil_img, img_folder, img_name):
         """
@@ -87,6 +88,7 @@ class GenRandomImage:
         self.rand_labels_arr = []
 
         for idx, img_name in enumerate(rand_imgs):
+            # TODO: support for only one label each - as in the contest (maybe)
             # retrieve bbox coords randomly
             bboxs = self.buses_annots_df[self.buses_annots_df.img_name == img_name]['box_data'].values
             rand_bbox_loc = np.random.randint(len(bboxs[0]))  # select rand bus bbox
@@ -110,6 +112,49 @@ class GenRandomImage:
 
             cropped_buses_arr.append(cropped_bus)
         self.cropped_buses_arr = cropped_buses_arr
+
+    def get_cropped_buses_2(self):
+        """
+        given the path to the images and their locations, crop the buses
+        store them as pil images.
+        :return: list. pil images of cropped buses
+        """
+        # TODO: support some labeling logic
+        num_buses, scaling_factors = self.buses_coords_logic()
+        buses_imgs_name = self.buses_annots_df['img_name'].values
+        # rand_imgs = np.random.choice(buses_imgs_name, size=num_buses)
+        cropped_buses_arr = []
+        self.rand_labels_arr = []
+
+        for idx in range(num_buses):
+            keep_search_bus = True
+            # TODO: support for only one label each - as in the contest (maybe)
+            while keep_search_bus:
+                tmp_bus_img_name = np.random.choice(buses_imgs_name, size=1)[0]
+                # retrieve bbox coords randomly
+                bboxs = self.buses_annots_df[self.buses_annots_df.img_name == tmp_bus_img_name]['box_data'].values
+                rand_bbox_loc = np.random.randint(len(bboxs[0]))  # select rand bus bbox
+                rand_bbox = [bboxs[0][rand_bbox_loc]]
+                rand_bbox = DataUtils.convert_boxes_coordinates_1(rand_bbox)[0]
+
+                # Storing the corresponding img name and label - for generating output file later on
+                label = self.buses_annots_df[self.buses_annots_df.img_name == tmp_bus_img_name]['labels'].values
+                rand_label = label[0][rand_bbox_loc]
+                if rand_label not in self.rand_labels_arr:
+                    self.rand_labels_arr.append(rand_label)
+                    keep_search_bus = False
+
+                    # get bus image and optionally rescale it
+                    bus_img = Image.open(os.path.join(self.buses_path, tmp_bus_img_name))
+                    cropped_bus = bus_img.crop(rand_bbox)
+
+                    if self.rescale_buses:
+                        scale_factor = np.sqrt(scaling_factors[idx])
+                        new_w = int(scale_factor * (rand_bbox[2] - rand_bbox[0]))
+                        new_y = int(scale_factor * (rand_bbox[3] - rand_bbox[1]))
+                        cropped_bus = GenRandomImage.scale_cropped_bus(cropped_bus, scale=(new_w, new_y))
+
+                    self.cropped_buses_arr.append(cropped_bus)
 
     def buses_coords_logic(self, mean=1.0, std=0.3):
         """
@@ -210,7 +255,7 @@ class GenRandomImage:
         # make sure it's jpg
 
         rand_img_out_path = os.path.join(self.root, 'generated_images', self.rand_img_out_name)
-        new_img.save(rand_img_path)
+        new_img.save(rand_img_out_path)
 
 
 """Test it"""
