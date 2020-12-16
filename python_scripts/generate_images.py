@@ -39,7 +39,11 @@ class GenRandomImage:
         # generate all shared objects
         self.scale_img()
         # self.gen_buses_df()
-        self.get_cropped_buses_2()
+        if self.one_label_each:
+            self.get_cropped_buses_2()
+        else:
+            self.get_cropped_buses()
+
         self.gen_rand_buses_locations()
         self.gen_labels_file()
         self.paste_rand_buses()
@@ -121,6 +125,7 @@ class GenRandomImage:
         """
         # TODO: support some labeling logic
         num_buses, scaling_factors = self.buses_coords_logic()
+        print(num_buses)
         buses_imgs_name = self.buses_annots_df['img_name'].values
         # rand_imgs = np.random.choice(buses_imgs_name, size=num_buses)
         cropped_buses_arr = []
