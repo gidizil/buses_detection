@@ -5,13 +5,13 @@ from sys import platform
 linux = False
 if(platform == 'linux' or platform == 'linux2'):
     linux = True
-train_or_val = 'train' #should be either validation or train
+train_or_val = 'validation' #should be either validation or train
 if train_or_val == 'train':
     annotations_file_name = "annotationsTrainOnly.txt"
-    result_json_file_name = 'cocoformatTrain.json'
+    result_json_file_name = 'cocoformatTrain-oneindexed.json'
 else:
     annotations_file_name = "annotationsValidationOnly.txt"
-    result_json_file_name = 'cocoformatValidation.json'
+    result_json_file_name = 'cocoformatValidation-oneindexed.json'
 root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 imgs_path = os.path.join(root, train_or_val)
 annotations_file_path = os.path.join(root, annotations_file_name)
@@ -34,32 +34,32 @@ coco_dict = {"info": {
     ],
     "categories": [
         {
-            "id": 0,
+            "id": 1,
             "name": "Green Bus",
             "supercategory": "none"
         },
         {
-            "id": 1,
+            "id": 2,
             "name": "Yellow Bus",
             "supercategory": "none"
         },
         {
-            "id": 2,
+            "id": 3,
             "name": "White Bus",
             "supercategory": "none"
         },
         {
-            "id": 3,
+            "id": 4,
             "name": "Grey Bus",
             "supercategory": "none"
         },
         {
-            "id": 4,
+            "id": 5,
             "name": "Blue Bus",
             "supercategory": "none"
         },
         {
-            "id": 5,
+            "id": 6,
             "name": "Red Bus",
             "supercategory": "none"
         }
@@ -126,7 +126,7 @@ for im_num, line in enumerate(file):
         coco_dict["annotations"].append({
             "id": anns_id+i,
             "image_id": im_num,
-            "category_id": bb_box[-1]-1,
+            "category_id": bb_box[-1],
             "bbox": bb_box[0:-1],
             "area": bb_box[2]*bb_box[3],
             "segmentation": [],
