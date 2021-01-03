@@ -1,6 +1,6 @@
 import torchvision
 from torch.utils.data import DataLoader, Dataset
-from python_scripts.utils import BusesDataset, DataUtils
+from python_scripts.utils_gidi import BusesDataset, DataUtils
 from models.faster_rcnn import FasterRCNNMODEL
 import os
 """

@@ -36,7 +36,7 @@ force_input_size = None  # set None to use default size
 anchor_ratios = [(1.0, 1.0), (1.4, 0.7), (0.7, 1.4)]
 anchor_scales = [2 ** 0, 2 ** (1.0 / 3.0), 2 ** (2.0 / 3.0)]
 
-threshold = 0.4
+threshold = 0.44
 iou_threshold = 0.7
 
 use_cuda = True
@@ -67,7 +67,7 @@ def run(myAnnFileName, buses):
     model = EfficientDetBackbone(compound_coef=compound_coef, num_classes=len(obj_list),
                                  ratios=anchor_ratios, scales=anchor_scales)
     # model.load_state_dict(torch.load(f'weights/efficientdet-d{compound_coef}.pth', map_location='cpu'))
-    model.load_state_dict(torch.load(f'weights/efficientdet-d{compound_coef}_499_22500.pth', map_location='cpu'))
+    model.load_state_dict(torch.load(f'../weights/efficientdet-d{compound_coef}_499_22500.pth', map_location='cpu'))
 
     model.requires_grad_(False)
     model.eval()
@@ -87,6 +87,8 @@ def run(myAnnFileName, buses):
                           anchors, regression, classification,
                           regressBoxes, clipBoxes,
                           threshold, iou_threshold)
+
+        out = invert_affine(framed_metas, out) #todo: maybe not needed
 
         ## out is a list of dicts, where the first item matches the first image that was sent in img_path. each dict has 3 keys:
         ## rois: values are array of (num_of,boxes,4) floats for the bounding boxes, class_ids: values are array of (num_of_boxes,1) holding the class id
@@ -111,7 +113,8 @@ def run(myAnnFileName, buses):
 root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 file_dir = 'python_scripts'
 file_name = 'my_annotations_train.txt'
-run(os.path.join(root, file_dir, file_name), 'test/')
+buses = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')),'validation/')
+run(os.path.join(root, file_dir, file_name), buses)
 
 
 def display(preds, imgs, imshow=True, imwrite=False):

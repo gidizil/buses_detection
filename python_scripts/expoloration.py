@@ -5,7 +5,7 @@ from PIL import Image
 from torch.utils.data import Dataset, DataLoader
 import torch
 import torchvision
-from python_scripts.utils import BusesDataset
+from python_scripts.utils_gidi import BusesDataset
 import os
 """Check 1 - See you can show image with anotations"""
 

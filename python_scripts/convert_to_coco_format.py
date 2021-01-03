@@ -5,13 +5,16 @@ from sys import platform
 linux = False
 if(platform == 'linux' or platform == 'linux2'):
     linux = True
-train_or_val = 'validation' #should be either validation or train
+train_or_val = 'Gen_imgs_and_train' #should be either validation or train
 if train_or_val == 'train':
     annotations_file_name = "annotationsTrainOnly.txt"
     result_json_file_name = 'cocoformatTrain-oneindexed.json'
-else:
+elif train_or_val == 'validation':
     annotations_file_name = "annotationsValidationOnly.txt"
     result_json_file_name = 'cocoformatValidation-oneindexed.json'
+else:
+    annotations_file_name = "annotationsTrainandGenOnly.txt"
+    result_json_file_name = '../datasets/buses/annotations/instances_train.json'
 root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 imgs_path = os.path.join(root, train_or_val)
 annotations_file_path = os.path.join(root, annotations_file_name)
