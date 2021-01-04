@@ -125,7 +125,6 @@ class GenRandomImage:
         """
         # TODO: support some labeling logic
         num_buses, scaling_factors = self.buses_coords_logic()
-        print(num_buses)
         buses_imgs_name = self.buses_annots_df['img_name'].values
         # rand_imgs = np.random.choice(buses_imgs_name, size=num_buses)
         cropped_buses_arr = []
@@ -262,17 +261,52 @@ class GenRandomImage:
         rand_img_out_path = os.path.join(self.root, 'generated_images', self.rand_img_out_name)
         new_img.save(rand_img_out_path)
 
+    def close_all_imgs(self):
+        """Close all PIL images"""
+        pass
 
-"""Test it"""
+
 root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+"""Test it"""
+if False:
+    df_path = os.path.join(root, 'train/labels.txt')
+    buses_df = GenRandomImage.gen_buses_df(df_path)
 
-df_path = os.path.join(root, 'train/labels.txt')
-buses_df = GenRandomImage.gen_buses_df(df_path)
+    rand_img_path = os.path.join(root, 'rand_images/rocket.jpg')
+    buses_path = os.path.join(root, 'train')
+    GenRandomImage(rand_img_path, buses_path, buses_df, 'rand_img_1.jpg', rescale_buses=True)
+    print('???????')
 
-rand_img_path = os.path.join(root, 'rand_images/rocket.jpg')
-buses_path = os.path.join(root, 'train')
-GenRandomImage(rand_img_path, buses_path, buses_df, 'rand_img_1.jpg', rescale_buses=True)
-print('???????')
+"""Run it"""
+if True:
+    rand_imgs_dir = os.listdir(os.path.join(root, 'rand_images'))
+    rand_imgs_dir.sort()
+    df_path = os.path.join(root, 'train/labels.txt')
+    buses_path = os.path.join(root, 'train')
+    rand_dir_path = os.path.join(root, 'rand_images')
+    gen_dir_path = os.path.join(root, 'generated_images')
+    buses_df = GenRandomImage.gen_buses_df(df_path)
+
+    labels_file_path = os.path.join(gen_dir_path, 'rand_imgs_labels.txt')
+    with open(labels_file_path, 'a') as f:
+        # columns_line = 'img_name:annotations'
+        # f.write(columns_line + os.linesep)
+        strt = 752
+        for idx, rand_img_name in enumerate(rand_imgs_dir[strt:]):
+            # print(rand_img_name)
+            # 1. get proper naming
+            gen_img_name = 'gen_img_' + str(strt + idx + 1) + '.jpg'
+            rand_img_path = os.path.join(rand_dir_path, rand_img_name)
+
+            # apply the random pasting and get annots back
+            gen_rand_img = GenRandomImage(rand_img_path, buses_path, buses_df, gen_img_name)
+            annots = gen_rand_img.rand_img_annots
+            # 3. generate new annotations file - for generated images
+            line = annots[0] + ':' + str(annots[1][1:-1].repace(" ", ""))
+            f.write(line + os.linesep)
+
+
+
 
 
 
