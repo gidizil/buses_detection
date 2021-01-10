@@ -28,15 +28,14 @@ def change_bbox_format(x1, y1, x2, y2):
     return int(x_min), int(y_min), int(w), int(h)
 
 
-compound_coef = 3
+compound_coef = 1
 force_input_size = None  # set None to use default size
-#was 'test/bus_test.jpg'
-#img_path = 'test/bus_test.jpg'
+
 # replace this part with your project's anchor config
-anchor_ratios = [(1.0, 1.0), (1.4, 0.7), (0.7, 1.4)]
+anchor_ratios = [(1.3, 0.7), (1.3, 0.8), (1.5, 0.7)]  # [(1.0, 1.0), (1.4, 0.7), (0.7, 1.4)]
 anchor_scales = [2 ** 0, 2 ** (1.0 / 3.0), 2 ** (2.0 / 3.0)]
 
-threshold = 0.44
+threshold = 0.66
 iou_threshold = 0.7
 
 use_cuda = True
@@ -67,7 +66,7 @@ def run(myAnnFileName, buses):
     model = EfficientDetBackbone(compound_coef=compound_coef, num_classes=len(obj_list),
                                  ratios=anchor_ratios, scales=anchor_scales)
     # model.load_state_dict(torch.load(f'weights/efficientdet-d{compound_coef}.pth', map_location='cpu'))
-    model.load_state_dict(torch.load(f'../weights/efficientdet-d{compound_coef}_499_22500.pth', map_location='cpu'))
+    model.load_state_dict(torch.load(f'../logs/buses/efficientdet-d{compound_coef}_119_48654.pth', map_location='cpu'))
 
     model.requires_grad_(False)
     model.eval()
@@ -88,7 +87,7 @@ def run(myAnnFileName, buses):
                           regressBoxes, clipBoxes,
                           threshold, iou_threshold)
 
-        out = invert_affine(framed_metas, out) #todo: maybe not needed
+        out = invert_affine(framed_metas, out)
 
         ## out is a list of dicts, where the first item matches the first image that was sent in img_path. each dict has 3 keys:
         ## rois: values are array of (num_of,boxes,4) floats for the bounding boxes, class_ids: values are array of (num_of_boxes,1) holding the class id
@@ -115,33 +114,6 @@ file_dir = 'python_scripts'
 file_name = 'my_annotations_train.txt'
 buses = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')),'validation/')
 run(os.path.join(root, file_dir, file_name), buses)
-
-
-def display(preds, imgs, imshow=True, imwrite=False):
-    for i in range(len(imgs)):
-        if len(preds[i]['rois']) == 0:
-            continue
-
-        imgs[i] = imgs[i].copy()
-
-        for j in range(len(preds[i]['rois'])):
-            x1, y1, x2, y2 = preds[i]['rois'][j].astype(np.int)
-            obj = obj_list[preds[i]['class_ids'][j]]
-            score = float(preds[i]['scores'][j])
-            plot_one_box(imgs[i], [x1, y1, x2, y2], label=obj,score=score,color=color_list[get_index_label(obj, obj_list)])
-
-
-        if imshow:
-            cv2.imshow('img', imgs[i])
-            cv2.waitKey(0)
-
-        if imwrite:
-            cv2.imwrite(f'test/img_inferred_d{compound_coef}_this_repo_{i}.jpg', imgs[i])
-
-
-# out = invert_affine(framed_metas, out) # todo: why do we need this function- maybe we should work with out post this function
-# display(out, ori_imgs, imshow=False, imwrite=False)
-
 
 
 
